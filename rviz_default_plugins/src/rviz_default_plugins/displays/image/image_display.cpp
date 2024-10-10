@@ -46,6 +46,8 @@
 #include <OgreViewport.h>
 
 #include "sensor_msgs/image_encodings.hpp"
+#include "image_transport/image_transport.hpp"
+#include "image_transport/subscriber.hpp"
 
 #include "rviz_common/display_context.hpp"
 #include "rviz_common/frame_manager_iface.hpp"
@@ -58,6 +60,7 @@
 #include "rviz_default_plugins/displays/image/ros_image_texture.hpp"
 #include "rviz_default_plugins/displays/image/image_display.hpp"
 #include "rviz_default_plugins/displays/image/ros_image_texture_iface.hpp"
+#include "rviz_default_plugins/displays/image/get_transport_from_topic.hpp"
 
 namespace rviz_default_plugins
 {
@@ -70,6 +73,17 @@ ImageDisplay::ImageDisplay()
 ImageDisplay::ImageDisplay(std::unique_ptr<ROSImageTextureIface> texture)
 : texture_(std::move(texture))
 {
+
+  image_transport_property_ = new rviz_common::properties::EnumProperty(
+    "Image Transport Hint",
+    "raw",
+    "What type of image transport to use.",
+    topic_property_, SLOT(updateTransport()),
+    this);
+
+  for (const auto& [key, value] : transport_message_types_)
+    image_transport_property_->addOption(key);
+
   normalize_property_ = new rviz_common::properties::BoolProperty(
     "Normalize Range",
     true,
@@ -120,13 +134,55 @@ ImageDisplay::~ImageDisplay() = default;
 
 void ImageDisplay::onEnable()
 {
-  ITDClass::subscribe();
+  subscribe();
 }
 
 void ImageDisplay::onDisable()
 {
-  ITDClass::unsubscribe();
+  unsubscribe();
   clear();
+}
+
+// Need a signature with pass by reference for image_transport_.subscribe
+void ImageDisplay::incomingMessage(const sensor_msgs::msg::Image::ConstSharedPtr & img_msg){
+  ImageDisplay::incomingMessage(img_msg);
+}
+
+void ImageDisplay::subscribe(){
+  if (!isEnabled()) {
+    return;
+  }
+  if (topic_property_->isEmpty()) {
+    setStatus(
+      rviz_common::properties::StatusProperty::Error, "Topic",
+      QString("Error subscribing: Empty topic name"));
+    return;
+  }
+
+  try {
+    rclcpp::Node::SharedPtr node = rviz_ros_node_.lock()->get_raw_node();
+    image_transport::ImageTransport image_transport_(node);
+    // This part differs from the parent class. ImageTransportDisplay uses an
+    // image_transport::SubscriberFilter, which requires a different callback for each transport
+    // type. image_transport::Subscriber only requires one callback for "raw" and the other types
+    // are automatically converted.
+    subscription_ = image_transport_.subscribe(
+      rviz_default_plugins::displays::getBaseTopicFromTopic(topic_property_->getTopicStd()),
+      (uint32_t)qos_profile.get_rmw_qos_profile().depth, // TODO try without cast
+      &ImageDisplay::incomingMessage,
+      this,
+      new image_transport::TransportHints(node.get(),getTransportStd(),"image_transport"));
+
+    setStatus(rviz_common::properties::StatusProperty::Ok, "Topic", "OK");
+  } catch (rclcpp::exceptions::InvalidTopicNameError & e) {
+    setStatus(
+      rviz_common::properties::StatusProperty::Error, "Topic",
+      QString("Error subscribing: ") + e.what());
+  }
+}
+
+void ImageDisplay::unsubscribe(){
+  subscription_.shutdown();
 }
 
 void ImageDisplay::updateNormalizeOptions()
@@ -148,6 +204,14 @@ void ImageDisplay::updateNormalizeOptions()
     max_property_->setHidden(true);
     median_buffer_size_property_->setHidden(true);
   }
+}
+
+bool ImageDisplay::setTransport(const QString & str){
+  return image_transport_property_->setValue(str.toLower());
+}
+
+bool ImageDisplay::setTransportStd(const std::string & std_str){
+  return image_transport_property_->setValue(QString::fromStdString(std_str).toLower());
 }
 
 void ImageDisplay::clear()
@@ -192,6 +256,14 @@ void ImageDisplay::reset()
   clear();
 }
 
+QString ImageDisplay::getTransport(){
+  return image_transport_property_->getString();
+}
+
+std::string ImageDisplay::getTransportStd(){
+  return image_transport_property_->getStdString();
+}
+
 /* This is called by incomingMessage(). */
 void ImageDisplay::processMessage(sensor_msgs::msg::Image::ConstSharedPtr msg)
 {
@@ -205,6 +277,16 @@ void ImageDisplay::processMessage(sensor_msgs::msg::Image::ConstSharedPtr msg)
     updateNormalizeOptions();
   }
   texture_->addMessage(msg);
+}
+
+void ImageDisplay::updateTransport(){
+  topic_property_->setMessageType(
+    transport_message_types_.at(image_transport_property_->getString()));
+
+  // If topic does not match desired transport, clear it.
+  if (getTransportFromTopic(topic_property_->getStdString()) !=
+  image_transport_property_->getStdString())
+    topic_property_->setString("");
 }
 
 void ImageDisplay::setupScreenRectangle()
