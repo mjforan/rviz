@@ -32,6 +32,8 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <algorithm>
+#include <vector>
 
 #include <OgreCamera.h>
 #include <OgreManualObject.h>
@@ -54,6 +56,7 @@
 #include "rviz_common/render_panel.hpp"
 #include "rviz_common/validate_floats.hpp"
 #include "rviz_common/uniform_string_stream.hpp"
+#include "rviz_common/properties/ros_topic_multi_property.hpp"
 #include "rviz_rendering/material_manager.hpp"
 #include "rviz_rendering/render_window.hpp"
 
@@ -61,6 +64,8 @@
 #include "rviz_default_plugins/displays/image/image_display.hpp"
 #include "rviz_default_plugins/displays/image/ros_image_texture_iface.hpp"
 #include "rviz_default_plugins/displays/image/get_transport_from_topic.hpp"
+
+#include <rviz_common/logging.hpp> // TODO remove when done
 
 namespace rviz_default_plugins
 {
@@ -73,16 +78,17 @@ ImageDisplay::ImageDisplay()
 ImageDisplay::ImageDisplay(std::unique_ptr<ROSImageTextureIface> texture)
 : texture_(std::move(texture))
 {
+  delete this->topic_property_;
+  this->topic_property_ = new rviz_common::properties::RosTopicMultiProperty(
+    "Topic",
+    "",
+    std::vector<QString>(),
+    "Image transport topic to subscribe to.",
+    this,
+    SLOT(updateTopic()));
 
-  image_transport_property_ = new rviz_common::properties::EnumProperty(
-    "Image Transport Hint",
-    "raw",
-    "What type of image transport to use.",
-    topic_property_, SLOT(updateTransport()),
-    this);
-
-  for (const auto& [key, value] : transport_message_types_)
-    image_transport_property_->addOption(key);
+  delete this->qos_profile_property_;
+  this->qos_profile_property_ = new rviz_common::properties::QosProfileProperty(this->topic_property_, rclcpp::QoS(5));
 
   normalize_property_ = new rviz_common::properties::BoolProperty(
     "Normalize Range",
@@ -152,6 +158,45 @@ void ImageDisplay::subscribe(){
   if (!isEnabled()) {
     return;
   }
+
+  // TODO this should really be in onInitialize but setStatus does not work there
+  // Populate topic message types based on installed image_transport plugins
+  image_transport::ImageTransport image_transport_(rviz_ros_node_.lock()->get_raw_node());
+  std::vector<std::string> transports = image_transport_.getLoadableTransports();
+  std::vector<QString> message_types;
+  // Map to message types
+  const std::unordered_map<std::string, std::string> transport_message_types_ =
+  {
+      {"raw",             "sensor_msgs/msg/Image"},
+      {"compressed",      "sensor_msgs/msg/CompressedImage"},
+      {"compressedDepth", "sensor_msgs/msg/CompressedImage"},
+      {"theora",          "theora_image_transport/msg/Packet"},
+      {"zstd",            "sensor_msgs/msg/CompressedImage"},
+  };
+  std::string transports_str = "";
+  rviz_common::properties::StatusProperty::Level transports_status_level =
+    rviz_common::properties::StatusProperty::Ok;
+  for (std::string & transport : transports){
+    transport = transport.substr(transport.find_last_of('/') + 1);
+    try{
+      message_types.push_back(QString::fromStdString(transport_message_types_.at(transport)));
+      transports_str += transport + ", ";
+    }
+    catch (const std::out_of_range & e){
+      transports_status_level = rviz_common::properties::StatusProperty::Warn;
+      transports_str += "(unknown: " + transport + "), ";
+    }
+  }
+  setStatusStd(
+      transports_status_level,
+      "Image Transports",
+      transports_str);
+  // Remove duplicates
+  message_types.erase(std::unique(message_types.begin(), message_types.end() ), message_types.end());
+  // Update the message types to allow in the topic_property_
+  ((rviz_common::properties::RosTopicMultiProperty*)topic_property_)->setMessageTypes(message_types);
+
+  RVIZ_COMMON_LOG_INFO("subscribe");
   if (topic_property_->isEmpty()) {
     setStatus(
       rviz_common::properties::StatusProperty::Error, "Topic",
@@ -171,7 +216,10 @@ void ImageDisplay::subscribe(){
       (uint32_t)qos_profile.get_rmw_qos_profile().depth, // TODO try without cast
       &ImageDisplay::incomingMessage,
       this,
-      new image_transport::TransportHints(node.get(),getTransportStd(),"image_transport"));
+      new image_transport::TransportHints(
+        node.get(),
+        getTransportFromTopic(topic_property_->getStdString()),
+        "image_transport"));
 
     setStatus(rviz_common::properties::StatusProperty::Ok, "Topic", "OK");
   } catch (rclcpp::exceptions::InvalidTopicNameError & e) {
@@ -204,14 +252,6 @@ void ImageDisplay::updateNormalizeOptions()
     max_property_->setHidden(true);
     median_buffer_size_property_->setHidden(true);
   }
-}
-
-bool ImageDisplay::setTransport(const QString & str){
-  return image_transport_property_->setValue(str.toLower());
-}
-
-bool ImageDisplay::setTransportStd(const std::string & std_str){
-  return image_transport_property_->setValue(QString::fromStdString(std_str).toLower());
 }
 
 void ImageDisplay::clear()
@@ -256,14 +296,6 @@ void ImageDisplay::reset()
   clear();
 }
 
-QString ImageDisplay::getTransport(){
-  return image_transport_property_->getString();
-}
-
-std::string ImageDisplay::getTransportStd(){
-  return image_transport_property_->getStdString();
-}
-
 /* This is called by incomingMessage(). */
 void ImageDisplay::processMessage(sensor_msgs::msg::Image::ConstSharedPtr msg)
 {
@@ -277,16 +309,6 @@ void ImageDisplay::processMessage(sensor_msgs::msg::Image::ConstSharedPtr msg)
     updateNormalizeOptions();
   }
   texture_->addMessage(msg);
-}
-
-void ImageDisplay::updateTransport(){
-  topic_property_->setMessageType(
-    transport_message_types_.at(image_transport_property_->getString()));
-
-  // If topic does not match desired transport, clear it.
-  if (getTransportFromTopic(topic_property_->getStdString()) !=
-  image_transport_property_->getStdString())
-    topic_property_->setString("");
 }
 
 void ImageDisplay::setupScreenRectangle()
