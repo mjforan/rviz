@@ -48,10 +48,15 @@
 # include "rviz_common/properties/bool_property.hpp"
 # include "rviz_common/properties/float_property.hpp"
 # include "rviz_common/properties/int_property.hpp"
+# include "rviz_common/properties/enum_property.hpp"
 
 # include "rviz_default_plugins/displays/image/ros_image_texture_iface.hpp"
 # include "rviz_default_plugins/visibility_control.hpp"
-#include "rviz_default_plugins/displays/image/image_transport_display.hpp"
+# include "rviz_default_plugins/displays/image/image_transport_display.hpp"
+
+# include <sensor_msgs/msg/image.hpp>
+# include <sensor_msgs/msg/compressed_image.hpp>
+//# include <theora_image_transport/msg/packet.hpp>
 #endif
 
 
@@ -85,16 +90,37 @@ public:
   void update(float wall_dt, float ros_dt) override;
   void reset() override;
 
+  QString getTransport();
+  std::string getTransportStd();
+
 public Q_SLOTS:
   virtual void updateNormalizeOptions();
+  bool setTransport(const QString & str);
+  bool setTransportStd(const std::string & std_str);
 
 protected:
   // overrides from Display
   void onEnable() override;
   void onDisable() override;
+  void subscribe() override;
+  void unsubscribe() override;
+
+  void incomingMessage(const sensor_msgs::msg::Image::ConstSharedPtr & img_msg);
 
   /* This is called by incomingMessage(). */
   void processMessage(sensor_msgs::msg::Image::ConstSharedPtr msg) override;
+
+  image_transport::Subscriber subscription_;
+  rviz_common::properties::EnumProperty* image_transport_property_;
+  const std::unordered_map<QString, QString> transport_message_types_ =
+  {
+      {"raw",        QString::fromStdString(rosidl_generator_traits::name<sensor_msgs::msg::Image>())},
+      {"compressed", QString::fromStdString(rosidl_generator_traits::name<sensor_msgs::msg::CompressedImage>())},
+      /*{"theora",     QString::fromStdString(rosidl_generator_traits::name<theora_image_transport::msg::Packet>())}*/
+  };
+
+protected Q_SLOTS:
+  void updateTransport();
 
 private:
   void setupScreenRectangle();

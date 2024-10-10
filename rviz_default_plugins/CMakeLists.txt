@@ -65,6 +65,7 @@ find_package(gz_math_vendor REQUIRED)
 find_package(gz-math REQUIRED)
 
 find_package(image_transport REQUIRED)
+find_package(image_transport_plugins REQUIRED)
 find_package(interactive_markers REQUIRED)
 find_package(laser_geometry REQUIRED)
 find_package(map_msgs REQUIRED)
@@ -246,6 +247,7 @@ target_include_directories(rviz_default_plugins PUBLIC
 target_link_libraries(rviz_default_plugins PUBLIC
   ${geometry_msgs_TARGETS}
   image_transport::image_transport
+  ${image_transport_plugins_TARGETS}
   interactive_markers::interactive_markers
   laser_geometry::laser_geometry
   ${map_msgs_TARGETS}
@@ -284,6 +286,7 @@ ament_export_targets(rviz_default_plugins HAS_LIBRARY_TARGET)
 ament_export_dependencies(
   geometry_msgs
   image_transport
+  image_transport_plugins
   interactive_markers
   laser_geometry
   map_msgs

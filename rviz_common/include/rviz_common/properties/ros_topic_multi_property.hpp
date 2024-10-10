@@ -27,12 +27,13 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef RVIZ_COMMON__PROPERTIES__ROS_TOPIC_PROPERTY_HPP_
-#define RVIZ_COMMON__PROPERTIES__ROS_TOPIC_PROPERTY_HPP_
+#ifndef RVIZ_COMMON__PROPERTIES__ROS_TOPIC_MULTI_PROPERTY_HPP_
+#define RVIZ_COMMON__PROPERTIES__ROS_TOPIC_MULTI_PROPERTY_HPP_
 
 #include <string>
+#include <unordered_set>
 
-#include "rviz_common/properties/editable_enum_property.hpp"
+#include "rviz_common/properties/ros_topic_property.hpp"
 #include "rviz_common/ros_integration/ros_node_abstraction_iface.hpp"
 #include "rviz_common/visibility_control.hpp"
 
@@ -41,73 +42,28 @@ namespace rviz_common
 namespace properties
 {
 
-class RVIZ_COMMON_PUBLIC RosTopicProperty : public EditableEnumProperty
+class RVIZ_COMMON_PUBLIC RosTopicMultiProperty : public RosTopicProperty
 {
   Q_OBJECT
-
 public:
-  explicit RosTopicProperty(
-    const QString & name = QString(),
-    const QString & default_value = QString(),
-    const QString & message_type = QString(),
-    const QString & description = QString(),
-    Property * parent = nullptr,
-    const char * changed_slot = nullptr,
-    QObject * receiver = nullptr);
 
-  void initialize(ros_integration::RosNodeAbstractionIface::WeakPtr rviz_ros_node);
+  void setMessageTypes(const std::unordered_set<QString> & message_types);
 
-  void setMessageType(const QString & message_type);
-
-  QString getMessageType() const
-  {return message_type_;}
-
-  QString getTopic() const
-  {return getValue().toString();}
-
-  std::string getTopicStd() const
-  {return getValue().toString().toStdString();}
-
-  bool isEmpty() const
-  {return getTopicStd().empty();}
+  std::unordered_set<QString> getMessageTypes() const
+  {return message_types_;}
 
 protected Q_SLOTS:
-  virtual void fillTopicList();
-
-protected:
-  ros_integration::RosNodeAbstractionIface::WeakPtr rviz_ros_node_;
-  QString message_type_;
-};
-
-class RVIZ_COMMON_PUBLIC RosFilteredTopicProperty
-  : public rviz_common::properties::RosTopicProperty
-{
-  Q_OBJECT
-
-public:
-  RosFilteredTopicProperty(
-    const QString & name = QString(),
-    const QString & default_value = QString(),
-    const QString & message_type = QString(),
-    const QString & description = QString(),
-    const QRegExp & filter = QRegExp(),
-    Property * parent = 0,
-    const char * changed_slot = 0,
-    QObject * receiver = 0);
-
-  void enableFilter(bool enabled);
-
-  QRegExp filter() const;
-
-protected Q_SLOTS:
-  void fillTopicList() override;
+  virtual void fillTopicList() override;
 
 private:
-  QRegExp filter_;
-  bool filter_enabled_;
+  // hide the parent class methods which only take a single type
+  using RosTopicProperty::setMessageType;
+  using RosTopicProperty::getMessageType;
+
+  std::unordered_set<QString> message_types_; // TODO is there a QT-friendly type?
 };
 
 }  // end namespace properties
 }  // end namespace rviz_common
 
-#endif  // RVIZ_COMMON__PROPERTIES__ROS_TOPIC_PROPERTY_HPP_
+#endif  // RVIZ_COMMON__PROPERTIES__ROS_TOPIC_MULTI_PROPERTY_HPP_
