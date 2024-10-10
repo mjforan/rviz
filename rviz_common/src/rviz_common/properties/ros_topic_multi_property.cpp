@@ -30,6 +30,7 @@
 
 #include <map>
 #include <string>
+#include <algorithm>
 
 #include <QApplication>  // NOLINT: cpplint can't handle Qt imports
 
@@ -41,7 +42,19 @@ namespace rviz_common
 namespace properties
 {
 
-void RosTopicMultiProperty::setMessageTypes(const std::unordered_set<QString> & message_types)
+RosTopicMultiProperty::RosTopicMultiProperty(
+  const QString & name,
+  const QString & default_value,
+  const std::vector<QString> & message_types,
+  const QString & description,
+  Property * parent,
+  const char * changed_slot,
+  QObject * receiver)
+: RosTopicProperty(name, default_value, "", description, parent, changed_slot, receiver),
+  message_types_(message_types)
+{}
+
+void RosTopicMultiProperty::setMessageTypes(const std::vector<QString> & message_types)
 {
   message_types_ = message_types;
 }
@@ -57,9 +70,9 @@ void RosTopicMultiProperty::fillTopicList()
   for (const auto & topic : published_topics) {
     // Only add topics whose type matches.
     for (const auto & type : topic.second) {
-      if (message_types_.find(QString::fromStdString(type)) != message_types_.end()) {
+      if (std::find(message_types_.begin(), message_types_.end(), QString::fromStdString(type))
+      != message_types_.end())
         addOptionStd(topic.first);
-      }
     }
   }
   sortOptions();

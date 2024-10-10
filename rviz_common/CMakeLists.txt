@@ -104,6 +104,7 @@ set(rviz_common_headers_to_moc
   include/rviz_common/properties/property_tree_with_help.hpp
   include/rviz_common/properties/qos_profile_property.hpp
   include/rviz_common/properties/ros_topic_property.hpp
+  include/rviz_common/properties/ros_topic_multi_property.hpp
   include/rviz_common/properties/status_list.hpp
   include/rviz_common/properties/status_property.hpp
   include/rviz_common/properties/string_property.hpp
@@ -183,6 +184,7 @@ set(rviz_common_source_files
   src/rviz_common/properties/property_tree_with_help.cpp
   src/rviz_common/properties/property.cpp
   src/rviz_common/properties/ros_topic_property.cpp
+  src/rviz_common/properties/ros_topic_multi_property.cpp
   src/rviz_common/properties/quaternion_property.cpp
   src/rviz_common/properties/qos_profile_property.cpp
   src/rviz_common/properties/regex_filter_property.cpp

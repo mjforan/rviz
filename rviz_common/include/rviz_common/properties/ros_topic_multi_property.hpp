@@ -31,7 +31,7 @@
 #define RVIZ_COMMON__PROPERTIES__ROS_TOPIC_MULTI_PROPERTY_HPP_
 
 #include <string>
-#include <unordered_set>
+#include <vector>
 
 #include "rviz_common/properties/ros_topic_property.hpp"
 #include "rviz_common/ros_integration/ros_node_abstraction_iface.hpp"
@@ -46,21 +46,30 @@ class RVIZ_COMMON_PUBLIC RosTopicMultiProperty : public RosTopicProperty
 {
   Q_OBJECT
 public:
+  explicit RosTopicMultiProperty(
+    const QString & name = QString(),
+    const QString & default_value = QString(),
+    const std::vector<QString> & message_types = std::vector<QString>(),
+    const QString & description = QString(),
+    Property * parent = nullptr,
+    const char * changed_slot = nullptr,
+    QObject * receiver = nullptr);
 
-  void setMessageTypes(const std::unordered_set<QString> & message_types);
+  void setMessageTypes(const std::vector<QString> & message_types);
 
-  std::unordered_set<QString> getMessageTypes() const
+  std::vector<QString> getMessageTypes() const
   {return message_types_;}
 
 protected Q_SLOTS:
   virtual void fillTopicList() override;
 
 private:
-  // hide the parent class methods which only take a single type
+  // Hide the parent class methods which only take a single type
   using RosTopicProperty::setMessageType;
   using RosTopicProperty::getMessageType;
 
-  std::unordered_set<QString> message_types_; // TODO is there a QT-friendly type?
+  // Instead of one message type, store a list of allowed types
+  std::vector<QString> message_types_;
 };
 
 }  // end namespace properties

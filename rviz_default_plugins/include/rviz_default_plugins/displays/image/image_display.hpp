@@ -85,18 +85,13 @@ public:
   ImageDisplay();
   ~ImageDisplay() override;
 
-  // Overrides from Display
   void onInitialize() override;
   void update(float wall_dt, float ros_dt) override;
   void reset() override;
 
-  QString getTransport();
-  std::string getTransportStd();
 
 public Q_SLOTS:
   virtual void updateNormalizeOptions();
-  bool setTransport(const QString & str);
-  bool setTransportStd(const std::string & std_str);
 
 protected:
   // overrides from Display
@@ -111,16 +106,6 @@ protected:
   void processMessage(sensor_msgs::msg::Image::ConstSharedPtr msg) override;
 
   image_transport::Subscriber subscription_;
-  rviz_common::properties::EnumProperty* image_transport_property_;
-  const std::unordered_map<QString, QString> transport_message_types_ =
-  {
-      {"raw",        QString::fromStdString(rosidl_generator_traits::name<sensor_msgs::msg::Image>())},
-      {"compressed", QString::fromStdString(rosidl_generator_traits::name<sensor_msgs::msg::CompressedImage>())},
-      /*{"theora",     QString::fromStdString(rosidl_generator_traits::name<theora_image_transport::msg::Packet>())}*/
-  };
-
-protected Q_SLOTS:
-  void updateTransport();
 
 private:
   void setupScreenRectangle();
