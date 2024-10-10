@@ -145,7 +145,7 @@ void ImageDisplay::onDisable()
 
 // Need a signature with pass by reference for image_transport_.subscribe
 void ImageDisplay::incomingMessage(const sensor_msgs::msg::Image::ConstSharedPtr & img_msg){
-  ImageDisplay::incomingMessage(img_msg);
+  ImageTransportDisplay<sensor_msgs::msg::Image>::incomingMessage(img_msg);
 }
 
 void ImageDisplay::subscribe(){
