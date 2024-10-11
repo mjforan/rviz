@@ -65,11 +65,6 @@
 #include "rviz_default_plugins/displays/image/ros_image_texture_iface.hpp"
 #include "rviz_default_plugins/displays/image/get_transport_from_topic.hpp"
 
-#include <rviz_common/logging.hpp> // TODO remove when done
-
-// TODO This may have introduced a segfault upon closing the program, but it is infrequent.
-// It's possible this existed before my changes.
-
 namespace rviz_default_plugins
 {
 namespace displays
