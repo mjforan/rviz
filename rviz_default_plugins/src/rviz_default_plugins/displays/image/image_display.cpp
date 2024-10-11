@@ -67,6 +67,9 @@
 
 #include <rviz_common/logging.hpp> // TODO remove when done
 
+// TODO This may have introduced a segfault upon closing the program, but it is infrequent.
+// It's possible this existed before my changes.
+
 namespace rviz_default_plugins
 {
 namespace displays
@@ -196,7 +199,6 @@ void ImageDisplay::subscribe(){
   // Update the message types to allow in the topic_property_
   ((rviz_common::properties::RosTopicMultiProperty*)topic_property_)->setMessageTypes(message_types);
 
-  RVIZ_COMMON_LOG_INFO("subscribe");
   if (topic_property_->isEmpty()) {
     setStatus(
       rviz_common::properties::StatusProperty::Error, "Topic",
