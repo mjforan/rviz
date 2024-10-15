@@ -76,6 +76,8 @@ ImageDisplay::ImageDisplay()
 ImageDisplay::ImageDisplay(std::unique_ptr<ROSImageTextureIface> texture)
 : texture_(std::move(texture))
 {
+  // Remove the default single-type topic and replace with a multi-type topic property
+  // This allows us to display image and compressed image topics in the topic list
   delete this->topic_property_;
   this->topic_property_ = new rviz_common::properties::RosTopicMultiProperty(
     "Topic",
