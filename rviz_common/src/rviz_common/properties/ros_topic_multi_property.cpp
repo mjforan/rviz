@@ -42,23 +42,6 @@ namespace rviz_common
 namespace properties
 {
 
-RosTopicMultiProperty::RosTopicMultiProperty(
-  const QString & name,
-  const QString & default_value,
-  const std::vector<QString> & message_types,
-  const QString & description,
-  Property * parent,
-  const char * changed_slot,
-  QObject * receiver)
-: RosTopicProperty(name, default_value, "", description, parent, changed_slot, receiver),
-  message_types_(message_types)
-{}
-
-void RosTopicMultiProperty::setMessageTypes(const std::vector<QString> & message_types)
-{
-  message_types_ = message_types;
-}
-
 void RosTopicMultiProperty::fillTopicList()
 {
   QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));

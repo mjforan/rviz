@@ -55,8 +55,6 @@
 # include "rviz_default_plugins/displays/image/image_transport_display.hpp"
 
 # include <sensor_msgs/msg/image.hpp>
-# include <sensor_msgs/msg/compressed_image.hpp>
-//# include <theora_image_transport/msg/packet.hpp>
 #endif
 
 
@@ -89,12 +87,10 @@ public:
   void update(float wall_dt, float ros_dt) override;
   void reset() override;
 
-
 public Q_SLOTS:
   virtual void updateNormalizeOptions();
 
 protected:
-  // overrides from Display
   void onEnable() override;
   void onDisable() override;
   void subscribe() override;

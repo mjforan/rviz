@@ -42,6 +42,7 @@ namespace rviz_common
 namespace properties
 {
 
+// Like RosTopicProperty but can accept multiple message types
 class RVIZ_COMMON_PUBLIC RosTopicMultiProperty : public RosTopicProperty
 {
   Q_OBJECT
@@ -53,9 +54,14 @@ public:
     const QString & description = QString(),
     Property * parent = nullptr,
     const char * changed_slot = nullptr,
-    QObject * receiver = nullptr);
+    QObject * receiver = nullptr):
+  RosTopicProperty(name, default_value, "", description, parent, changed_slot, receiver),
+  message_types_(message_types)
+  {}
 
-  void setMessageTypes(const std::vector<QString> & message_types);
+  void setMessageTypes(const std::vector<QString> & message_types)
+  {message_types_ = message_types;}
+
 
   std::vector<QString> getMessageTypes() const
   {return message_types_;}
