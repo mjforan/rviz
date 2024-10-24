@@ -29,40 +29,37 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-
 #ifndef RVIZ_DEFAULT_PLUGINS__DISPLAYS__IMAGE__IMAGE_DISPLAY_HPP_
 #define RVIZ_DEFAULT_PLUGINS__DISPLAYS__IMAGE__IMAGE_DISPLAY_HPP_
 
 #ifndef Q_MOC_RUN  // See: https://bugreports.qt-project.org/browse/QTBUG-22829
-# include <memory>
-# include <string>
+#include <OgreMaterial.h>
+#include <OgreRenderTargetListener.h>
+#include <OgreSharedPtr.h>
 
-# include <QObject>  // NOLINT cpplint cannot handle include order here
+#include <QObject>  // NOLINT cpplint cannot handle include order here
 
-# include <OgreMaterial.h>
-# include <OgreRenderTargetListener.h>
-# include <OgreSharedPtr.h>
+#include <memory>
+#include <string>
 
-# include "rviz_common/message_filter_display.hpp"
-# include "rviz_common/render_panel.hpp"
-# include "rviz_common/properties/bool_property.hpp"
-# include "rviz_common/properties/float_property.hpp"
-# include "rviz_common/properties/int_property.hpp"
-# include "rviz_common/properties/enum_property.hpp"
+#include <sensor_msgs/msg/image.hpp>
 
-# include "rviz_default_plugins/displays/image/ros_image_texture_iface.hpp"
-# include "rviz_default_plugins/visibility_control.hpp"
-# include "rviz_default_plugins/displays/image/image_transport_display.hpp"
-
-# include <sensor_msgs/msg/image.hpp>
+#include "rviz_common/message_filter_display.hpp"
+#include "rviz_common/properties/bool_property.hpp"
+#include "rviz_common/properties/enum_property.hpp"
+#include "rviz_common/properties/float_property.hpp"
+#include "rviz_common/properties/int_property.hpp"
+#include "rviz_common/render_panel.hpp"
+#include "rviz_default_plugins/displays/image/image_transport_display.hpp"
+#include "rviz_default_plugins/displays/image/ros_image_texture_iface.hpp"
+#include "rviz_default_plugins/visibility_control.hpp"
 #endif
-
 
 namespace Ogre
 {
 class SceneNode;
 class Rectangle2D;
-}
+}  // namespace Ogre
 
 namespace rviz_default_plugins
 {
@@ -73,8 +70,8 @@ namespace displays
  * \class ImageDisplay
  *
  */
-class RVIZ_DEFAULT_PLUGINS_PUBLIC ImageDisplay : public
-  rviz_default_plugins::displays::ImageTransportDisplay<sensor_msgs::msg::Image>
+class RVIZ_DEFAULT_PLUGINS_PUBLIC ImageDisplay
+  : public rviz_default_plugins::displays::ImageTransportDisplay<sensor_msgs::msg::Image>
 {
   Q_OBJECT
 

@@ -46,33 +46,32 @@ namespace properties
 class RVIZ_COMMON_PUBLIC RosTopicMultiProperty : public RosTopicProperty
 {
   Q_OBJECT
+
 public:
   explicit RosTopicMultiProperty(
-    const QString & name = QString(),
-    const QString & default_value = QString(),
+    const QString & name = QString(), const QString & default_value = QString(),
     const std::vector<QString> & message_types = std::vector<QString>(),
-    const QString & description = QString(),
-    Property * parent = nullptr,
-    const char * changed_slot = nullptr,
-    QObject * receiver = nullptr):
-  RosTopicProperty(name, default_value, "", description, parent, changed_slot, receiver),
-  message_types_(message_types)
-  {}
+    const QString & description = QString(), Property * parent = nullptr,
+    const char * changed_slot = nullptr, QObject * receiver = nullptr)
+  : RosTopicProperty(name, default_value, "", description, parent, changed_slot, receiver),
+    message_types_(message_types)
+  {
+  }
 
   void setMessageTypes(const std::vector<QString> & message_types)
-  {message_types_ = message_types;}
+  {
+    message_types_ = message_types;
+  }
 
-
-  std::vector<QString> getMessageTypes() const
-  {return message_types_;}
+  std::vector<QString> getMessageTypes() const {return message_types_;}
 
 protected Q_SLOTS:
-  virtual void fillTopicList() override;
+  void fillTopicList() override;
 
 private:
   // Hide the parent class methods which only take a single type
-  using RosTopicProperty::setMessageType;
   using RosTopicProperty::getMessageType;
+  using RosTopicProperty::setMessageType;
 
   // Instead of one message type, store a list of allowed types
   std::vector<QString> message_types_;

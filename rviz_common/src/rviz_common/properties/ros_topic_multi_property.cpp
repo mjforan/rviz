@@ -27,14 +27,13 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-
-#include <map>
-#include <string>
-#include <algorithm>
+#include "rviz_common/properties/ros_topic_multi_property.hpp"
 
 #include <QApplication>  // NOLINT: cpplint can't handle Qt imports
+#include <algorithm>
+#include <map>
+#include <string>
 
-#include "rviz_common/properties/ros_topic_multi_property.hpp"
 #include "rviz_common/ros_integration/ros_node_abstraction_iface.hpp"
 
 namespace rviz_common
@@ -53,9 +52,12 @@ void RosTopicMultiProperty::fillTopicList()
   for (const auto & topic : published_topics) {
     // Only add topics whose type matches.
     for (const auto & type : topic.second) {
-      if (std::find(message_types_.begin(), message_types_.end(), QString::fromStdString(type))
-      != message_types_.end())
+      if (
+        std::find(message_types_.begin(), message_types_.end(), QString::fromStdString(type)) !=
+        message_types_.end())
+      {
         addOptionStd(topic.first);
+      }
     }
   }
   sortOptions();
