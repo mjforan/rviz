@@ -189,7 +189,7 @@ void ImageDisplay::subscribe()
     // are automatically converted.
     subscription_ = image_transport_.subscribe(
       rviz_default_plugins::displays::getBaseTopicFromTopic(topic_property_->getTopicStd()),
-      (uint32_t)qos_profile.get_rmw_qos_profile().depth,  // TODO(mjforan) try without cast
+      qos_profile.get_rmw_qos_profile().depth,
       &ImageDisplay::incomingMessage, this,
       new image_transport::TransportHints(
         node.get(), getTransportFromTopic(topic_property_->getStdString()), "image_transport"));
